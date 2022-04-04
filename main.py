@@ -29,6 +29,7 @@ COLOR_BLANK = pg.Color("black")
 PLAY_ALERT = True
 TTD = 300
 VICTORY = False
+GODMODE = False
 
 # File System
 # Do constanty ulozime cestu k images folderu
@@ -261,6 +262,7 @@ class Enemy(pg.sprite.Sprite):
        # if self.rect.up < 0 or self.rect.down > SCREEN_HEIGHT:
            # self.speedy *= 1
 
+#  A normal bullet class
 class Bullet(pg.sprite.Sprite):
     # defaults
     __BULLET_SpeedY__ = 10
@@ -281,6 +283,7 @@ class Bullet(pg.sprite.Sprite):
         if self.rect.bottom < 0:
             self.kill()
 
+# Special bullet class
 class SP_Bullet(pg.sprite.Sprite):
     # defaults
     __BULLET_SpeedY__ = 20
@@ -306,6 +309,7 @@ class SP_Bullet(pg.sprite.Sprite):
 #######################################################
 # Ak držím klavesu tak nech sa pohnem
 def HandleKeyDownEvent(KeyDownEvent):
+    global GODMODE
     if KeyDownEvent.key == pg.K_a:
         player.goLeft(True)
     if KeyDownEvent.key == pg.K_d:
@@ -315,9 +319,13 @@ def HandleKeyDownEvent(KeyDownEvent):
     if KeyDownEvent.key == pg.K_s:
         player.goDown(True)
  
-# Shoot function
+# Shoot function with the space bar
     if KeyDownEvent.key == pg.K_SPACE:
         player.shoot()
+
+# Activate GODMODE   
+    if KeyDownEvent.key == pg.K_g:
+        GODMODE = True
 
 # Ale ak som pustil klavesu tak nech sa nehybem
 def HandleKeyUpEvent(KeyUpEvent):
@@ -354,13 +362,13 @@ def victoryState():
     global CURRENT_ENEMY_COUNT
     global VICTORY
     # Check if the player has beaten the meteor storm
-    if Enemy.badVar > 7:
+    if Enemy.badVar > 13:
         # Stops the spawning of meteors
         VICTORY = True
         DrawText(screen, "Congratulations You Have Won!","arial", 45, SCREEN_WIDTH /2, 30)
 
     else:
-        if Enemy.badVar >= 2 and Enemy.badVar < 6.8:
+        if Enemy.badVar >= 3 and Enemy.badVar < 7.8:
             DrawText(screen, "Meteorite cluster incoming!!!","arial", 24, SCREEN_WIDTH /2, 35) 
             # Play scary effect 
             # OR NOT HUH????,
@@ -416,15 +424,22 @@ while running:
             writeScore(score)
             running = False
             QuitGame()
-        
+
+        # Check if you fired a missile
+        # And if you can fire a Special attack
         elif event.type == pg.MOUSEBUTTONDOWN:
             if event.button == 1:
                 player.shoot()
+                
+            # Special attack check  
             if event.button == 3:
-                if sp_attack_counter > 13:
+                if GODMODE == True:
                     player.shoot_SP()
-                    SFX_SP_Fire.play()
-                    sp_attack_counter = 0
+                else:
+                    if sp_attack_counter > 13:
+                        player.shoot_SP()
+                        SFX_SP_Fire.play()
+                        sp_attack_counter = 0
         
         # handle KeyDown event
         elif event.type == pg.KEYDOWN:
@@ -478,20 +493,23 @@ while running:
             enemies.add(newEnemy)
 
         # add new enemies after some are killed by the special attack
-        for hit in sp_hits:
-            score += 80 - hit.sizex
-            #print(score)
-            newEnemy = Enemy()
-            all_sprites.add(newEnemy)
-            enemies.add(newEnemy)
+    for hit in sp_hits:
+        score += 80 - hit.sizex
+        #print(score)
+        newEnemy = Enemy()
+        all_sprites.add(newEnemy)
+        enemies.add(newEnemy)
 
     # check for collisions between Player and Enemy sprites
     collisions = pg.sprite.spritecollide(player, enemies, True) # rectangle collision strategy
     if collisions:
-        writeScore(score)
-        SFX_PlayerExplosion.play()
-        time.sleep(1)
-        running = False
+        if GODMODE == False:
+            writeScore(score)
+            SFX_PlayerExplosion.play()
+            time.sleep(1)
+            running = False 
+        else:
+            pass
 
     # clear screen to blank color OR blit a background image before drawing a sceen again
     screen.blit(IMG_background, IMG_background.get_rect())
