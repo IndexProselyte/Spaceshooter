@@ -5,7 +5,8 @@ import time
 import pygame as pg
 from pygame.locals import *
 from datetime import datetime
-
+import pygame_widgets
+from pygame_widgets.button import Button
 #######################################################
 # Constants
 #######################################################
@@ -15,11 +16,11 @@ SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 700
 
 # Zmení názov programu
-SCREEN_CAPTION = "Game"
-SCREEN_FPS = 20
+SCREEN_CAPTION = "Meteor survival"
+SCREEN_FPS = 30
 
-# Zmení iconu programu
-SCREEN_ICON = "iranian_children.png.jpg"
+# Zmení iconu programu jk it doesnt do shit
+SCREEN_ICON = "wiliamdedrip.jpg"
 
 # Pozadie hry
 SCREEN_BGIMAGE = "screen_background.png"
@@ -30,6 +31,7 @@ PLAY_ALERT = True
 TTD = 300
 VICTORY = False
 GODMODE = False
+RUN = True
 
 # File System
 # Do constanty ulozime cestu k images folderu
@@ -45,7 +47,7 @@ FILE_IMG_Player = "player.png"
 FILE_IMG_Enemy = "Asteroid Brown.png"
 FILE_IMG_Bullet = "missile.png"
 FILE_IMG_Bullet_SP = "player.png"
-FILE_MUS_Background = "hra1 main_track.ogg"
+FILE_MUS_Background = "ingame.ogg"
 FILE_SFX_Fire = "fire.wav"
 FILE_SFX_SP_Fire = "space laser.wav"
 FILE_SFX_PlayerExplosion = "player_explosion.wav"
@@ -63,7 +65,7 @@ CURRENT_ENEMY_COUNT = 0
 
 # loads music file from assets folder
 def LoadMusic(fileName):
-    pg.mixer.music.load(os.path.join(DIR_ASSETS_MUSIC, fileName))
+    return pg.mixer.music.load(os.path.join(DIR_ASSETS_MUSIC, fileName))
 
 # loads image file from assets folder
 def LoadImage(fileName): 
@@ -75,6 +77,7 @@ def LoadSound(fileName):
     return pg.mixer.Sound(os.path.join(DIR_ASSETS_SOUNDS, fileName))
 
 #  TODO : Understand and fix
+
 # draw a given text of given size to given surface on given position
 def DrawText(surface, text, fontess, size, x, y):
     # Setneme font
@@ -84,6 +87,50 @@ def DrawText(surface, text, fontess, size, x, y):
     text_rect = text_surface.get_rect()
     text_rect.midtop = (x, y)
     surface.blit(text_surface, text_rect)
+
+def ShowScore():
+    print("suiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
+
+def CreateButon(x,y,width,height,texts,function):
+    button = Button(
+        # Mandatory Parameters
+        screen,  # Surface to place button on
+        x,  # X-coordinate of top left corner
+        y,  # Y-coordinate of top left corner
+        width,  # Width
+        height,  # Height
+
+        # Optional Parameters
+        text= texts,  # Text to display
+        fontSize=50,  # Size of font
+        margin=20,  # Minimum distance between text/image and edge of button
+        inactiveColour=(200, 50, 0),  # Colour of button when not being interacted with
+        hoverColour=(150, 0, 0),  # Colour of button when being hovered over
+        pressedColour=(0, 200, 20),  # Colour of button when being clicked
+        radius=20,  # Radius of border corners (leave empty for not curved)
+        onClick= function  # Function to call when clicked on
+        )
+    button
+
+def MainMenu():
+    global RUN
+    RUN = True
+    while RUN:
+        events = pg.event.get()
+        for event in events:
+            if event.type == pg.QUIT:
+                pg.quit()
+                RUN = False
+                quit()
+       
+        screen.blit(IMG_background, IMG_background.get_rect())
+        CreateButon(250,350, 200, 150, "Start game", startgame)
+        CreateButon(30,350, 200, 150, "Score history", ShowScore)
+        CreateButon(470,350, 200, 150, "Exit", QuitGame)
+        #screen.fill((255, 255, 255))
+        pygame_widgets.update(events)
+        pg.display.update()
+
 
 # quits to system
 def QuitGame():
@@ -100,7 +147,9 @@ pg.font.init()
 # module for loading and playing sounds & music
 pg.mixer.init()
 
+# Why wont you work?????
 pg.display.set_icon(LoadImage(SCREEN_ICON))
+
 pg.display.set_caption(SCREEN_CAPTION)
 screen = pg.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 clock = pg.time.Clock()
@@ -240,7 +289,7 @@ class Enemy(pg.sprite.Sprite):
         self.rect.y = random.randrange(-100, -40)
         # Získame náhodnú rýchlost pre pohyb dolu a do šikma
         self.speedx = random.randrange(-5, 8)
-        self.speedy = random.randrange(3, 12) + Enemy.badVar
+        self.speedy = random.randrange(3, 8) + Enemy.badVar
 
     def update(self):
         # Vloz rýchlost do suradnic
@@ -304,7 +353,7 @@ class SP_Bullet(pg.sprite.Sprite):
         if self.rect.bottom < 0:
             self.kill()
 
-#######################################################
+######################################################dw#
 # Game functions
 #######################################################
 # Ak držím klavesu tak nech sa pohnem
@@ -362,10 +411,11 @@ def victoryState():
     global CURRENT_ENEMY_COUNT
     global VICTORY
     # Check if the player has beaten the meteor storm
-    if Enemy.badVar > 13:
+    if Enemy.badVar > 11:
         # Stops the spawning of meteors
         VICTORY = True
-        DrawText(screen, "Congratulations You Have Won!","arial", 45, SCREEN_WIDTH /2, 30)
+        DrawText(screen, "Congratulations You Have Won!","sylfaen", 45, SCREEN_WIDTH /2, 300)
+        DrawText(screen, "Press  g  for Godmode","sylfaen", 45, SCREEN_WIDTH /2, 350)
 
     else:
         if Enemy.badVar >= 3 and Enemy.badVar < 7.8:
@@ -381,153 +431,159 @@ def victoryState():
             else:    
                 TTD -= 1
 
-#######################################################
-# Main + Overall Event Loop
-#######################################################
-# configujeme mixer a audio
-pg.mixer.music.set_volume(0.1)
-# Aby hralo nekonecno
-pg.mixer.music.play(loops=-1)
 
-# sprite groups to easy update all sprites
+# Moved to here beacuze the program would freeze if left in the startgame function
+#######################################################
+ # sprite groups to easy update all sprites
 all_sprites = pg.sprite.Group()
 enemies = pg.sprite.Group()
 bullets = pg.sprite.Group()
 sp_bullets = pg.sprite.Group()
 
-# creation of Player sprite
+    # creation of Player sprite
 player = Player()
 all_sprites.add(player)
+# Main + Overall Event Loop
+#######################################################
+def startgame():
+    global RUN
+    RUN = False
+    # configujeme mixer a audio
+    pg.mixer.music.set_volume(0.1)
+    # Aby hralo nekonecno
+    pg.mixer.music.play(loops=-1)
 
-# creation of Enemy sprites and the enemies themselfs
-for e in range(GAME_ENEMY_COUNT):
-    CURRENT_ENEMY_COUNT += 1
-    enemy = Enemy()
-    all_sprites.add(enemy)
-    enemies.add(enemy)
+    # creation of Enemy sprites and the enemies themselfs
+    for e in range(GAME_ENEMY_COUNT):
+        enemy = Enemy()
+        all_sprites.add(enemy)
+        enemies.add(enemy)
 
-# Stores player's score
-score = 0
-# Stores players special attack
-sp_attack_counter = 5
+    # Stores player's score
+    score = 0
+    # Stores players special attack
+    sp_attack_counter = 5
 
-running = True
-while running:
+    running = True
+    while running:
 
-    # loop through all events
-    for event in pg.event.get():
-        # print all events in console for debug purposes
-        #print(event)
+        # loop through all events
+        for event in pg.event.get():
+            # print all events in console for debug purposes
+            #print(event)
 
-        # check for closing window event
-        if event.type == pg.QUIT:
-            writeScore(score)
-            running = False
-            QuitGame()
+            # check for closing window event
+            if event.type == pg.QUIT:
+                writeScore(score)
+                running = False
+                QuitGame()
 
-        # Check if you fired a missile
-        # And if you can fire a Special attack
-        elif event.type == pg.MOUSEBUTTONDOWN:
-            if event.button == 1:
-                player.shoot()
+            # Check if you fired a missile
+            # And if you can fire a Special attack
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    player.shoot()
                 
-            # Special attack check  
-            if event.button == 3:
-                if GODMODE == True:
-                    player.shoot_SP()
-                else:
-                    if sp_attack_counter > 13:
+                # Special attack check  
+                if event.button == 3:
+                    if GODMODE == True:
                         player.shoot_SP()
-                        SFX_SP_Fire.play()
-                        sp_attack_counter = 0
+                    else:
+                        if sp_attack_counter > 13:
+                            player.shoot_SP()
+                            SFX_SP_Fire.play()
+                            sp_attack_counter = 0
         
-        # handle KeyDown event
-        elif event.type == pg.KEYDOWN:
-            HandleKeyDownEvent(event)
-        # handle KeyUp event
-        elif event.type == pg.KEYUP:
-            HandleKeyUpEvent(event)
+            # handle KeyDown event
+            elif event.type == pg.KEYDOWN:
+                HandleKeyDownEvent(event)
+            # handle KeyUp event
+            elif event.type == pg.KEYUP:
+                HandleKeyUpEvent(event)
     
-    # Check if the special is ready
-    if sp_attack_counter > 13:
-        if PLAY_ALERT:
-            PLAY_ALERT = False
-            SFX_Alert.play()
+     # Check if the special is ready
+        if sp_attack_counter > 13:
+            if PLAY_ALERT:
+                PLAY_ALERT = False
+                SFX_Alert.play()
 
-    # Resets the ability to play so it wont play continousli
-    if sp_attack_counter < 13:
-        PLAY_ALERT = True
+        # Resets the ability to play so it wont play continousli
+        if sp_attack_counter < 13:
+            PLAY_ALERT = True
 
-    # update all sprites
-    all_sprites.update()
+        # update all sprites
+        all_sprites.update()
 
-    # check for collisions/hits among Bullet and Enemy sprites
-    hits = pg.sprite.groupcollide(enemies, bullets, True, True)
-    # check for collisions among(us) SP_bullets and enemies
-    sp_hits = pg.sprite.groupcollide(enemies, sp_bullets, True, False)
+        # check for collisions/hits among Bullet and Enemy sprites
+        hits = pg.sprite.groupcollide(enemies, bullets, True, True)
+        # check for collisions among(us) SP_bullets and enemies
+        sp_hits = pg.sprite.groupcollide(enemies, sp_bullets, True, False)
 
-    # add new enemies after some are killed + some other  stuff
-    for hit in hits:
-        CURRENT_ENEMY_COUNT -= 1
-        sp_attack_counter += 1
-        # Získane score sa zmensuje podla velkosti meteoritu
-        score += 120 - hit.sizex
-        #print(score)
+        # add new enemies after some are killed + some other  stuff
+        for hit in hits:
+            sp_attack_counter += 1
+            # Získane score sa zmensuje podla velkosti meteoritu
+            score += 120 - hit.sizex
+            #print(score)
         
-        # Make the level harder the longer you play by first increasing the speed andd other things
-        Enemy.badVar += 0.1
+            # Make the level harder the longer you play by first increasing the speed andd other things
+            Enemy.badVar += 0.1
 
-        # Here just to stop enemies from spawning after victory
-        if VICTORY == False:
-            # And then entering a meteorit megacluster.
-            if TTD == 0:
-                for i in range(2):
-                    CURRENT_ENEMY_COUNT += 2    
-                    newEnemy = Enemy()
-                    all_sprites.add(newEnemy)
-                    enemies.add(newEnemy)
+            # ENABLE ONLY IN THE NEED FOR SELF HURT
+            # SCREEN_FPS += 5
+
+
+            # Here just to stop enemies from spawning after victory
+            if VICTORY == False:
+                # And then entering a meteorit megacluster.
+                if TTD == 0:
+                    for i in range(2):   
+                        newEnemy = Enemy()
+                        all_sprites.add(newEnemy)
+                        enemies.add(newEnemy)
                     
-            CURRENT_ENEMY_COUNT += 1
+                newEnemy = Enemy()
+                all_sprites.add(newEnemy)
+                enemies.add(newEnemy)
+
+            # add new enemies after some are killed by the special attack
+        for hit in sp_hits:
+            score += 80 - hit.sizex
+            #print(score)
             newEnemy = Enemy()
             all_sprites.add(newEnemy)
             enemies.add(newEnemy)
 
-        # add new enemies after some are killed by the special attack
-    for hit in sp_hits:
-        score += 80 - hit.sizex
-        #print(score)
-        newEnemy = Enemy()
-        all_sprites.add(newEnemy)
-        enemies.add(newEnemy)
-
-    # check for collisions between Player and Enemy sprites
-    collisions = pg.sprite.spritecollide(player, enemies, True) # rectangle collision strategy
-    if collisions:
-        if GODMODE == False:
-            writeScore(score)
-            SFX_PlayerExplosion.play()
-            time.sleep(1)
-            running = False 
-        else:
-            pass
+        # check for collisions between Player and Enemy sprites
+        collisions = pg.sprite.spritecollide(player, enemies, True) # rectangle collision strategy
+        if collisions:
+            if GODMODE == False:
+                writeScore(score)
+                SFX_PlayerExplosion.play()
+                time.sleep(1)
+                running = False 
+            else:
+                pass
 
     # clear screen to blank color OR blit a background image before drawing a sceen again
-    screen.blit(IMG_background, IMG_background.get_rect())
+        screen.blit(IMG_background, IMG_background.get_rect())
 
     # draw / render the sceen
-    all_sprites.draw(screen)
-    DrawText(screen, str(score),"arial", 18, SCREEN_WIDTH /2, 10)
+        all_sprites.draw(screen)
+        DrawText(screen, str(score),"arial", 18, SCREEN_WIDTH /2, 10)
 
     # Check if WE WERE VICTORIOUS HE HE HE HA!!!
-    victoryState()
+        victoryState()
 
     # *after* drawing everything, flip/update the screen with what we've drawn
-    pg.display.flip()
+        pg.display.flip()
     #pg.display.update()
+    
 
     # control the draw update speed
-    clock.tick(SCREEN_FPS)
+        clock.tick(SCREEN_FPS)
 #######################################################
 # Quit
 #######################################################
+MainMenu()
 QuitGame()
