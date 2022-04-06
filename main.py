@@ -88,8 +88,39 @@ def DrawText(surface, text, fontess, size, x, y):
     text_rect.midtop = (x, y)
     surface.blit(text_surface, text_rect)
 
+
+# Create the score tab
+ALIVE = True
 def ShowScore():
-    print("suiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
+    global ALIVE
+    o = 1
+    scorePath = "assets\stats\score.txt"
+    # Reads the last 4 lines in the score.txt document and adds them to a list 
+    log = []
+    with open(scorePath) as file: 
+        for line in (file.readlines() [-4:]):
+            log.append(line)
+    file.close()
+    
+    line1 = str(log[1])
+    line2 = str(log[2])
+    line3 = str(log[3])
+
+    #  Main loop
+    ALIVE = True
+    while ALIVE:
+        events = pg.event.get()
+        for event in events:
+            if event.type == pg.QUIT:
+                pg.quit()
+                ALIVE = False
+                quit()
+        #screen.fill((255, 255, 255))
+        DrawText(screen, line1,"sylfaen", 25, SCREEN_WIDTH /2, 240)
+        DrawText(screen, line2,"sylfaen", 25, SCREEN_WIDTH /2, 300)
+        DrawText(screen, line3,"sylfaen", 25, SCREEN_WIDTH /2, 360)
+        pg.display.update()
+
 
 def CreateButon(x,y,width,height,texts,function):
     button = Button(
@@ -234,7 +265,7 @@ class Player(pg.sprite.Sprite):
     
         # Vytvorenie bullet projectilu ktory ma x a y parametre v argumentoch
     def shoot(self):
-        bullet = Bullet(self.rect.centerx, self.rect.top)
+        bullet = Bullet(self.rect.centerx, self.rect.top+10)
         # Pridanie do skupiny spritov
         all_sprites.add(bullet)
         bullets.add(bullet)
@@ -395,7 +426,7 @@ def writeScore(score):
     # Create a long string with the time and date
     Log = (
         "\n"
-        f'This was your score: {score}\n'
+        f'This was your last score: {score}\n'
         f"You achieved this in {current_DateTime}\n" 
          "Congratas Amogo :)\n"
         )
@@ -404,6 +435,7 @@ def writeScore(score):
     # As "a" appends the text into the end of the file without deleting the previous contents
     with open(scorePath, 'a') as f:
             f.write(Log)
+    f.close()
 
 def victoryState():
     # Had to use a global here beacuze no other way worked and im lazy :)
