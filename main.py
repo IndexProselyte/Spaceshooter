@@ -93,7 +93,6 @@ def DrawText(surface, text, fontess, size, x, y):
 ALIVE = True
 def ShowScore():
     global ALIVE
-    o = 1
     scorePath = "assets\stats\score.txt"
     # Reads the last 4 lines in the score.txt document and adds them to a list 
     log = []
@@ -122,7 +121,7 @@ def ShowScore():
         pg.display.update()
 
 
-def CreateButon(x,y,width,height,texts,function):
+def CreateButon(x,y,width,height,texts,function, color):
     button = Button(
         # Mandatory Parameters
         screen,  # Surface to place button on
@@ -135,10 +134,9 @@ def CreateButon(x,y,width,height,texts,function):
         text= texts,  # Text to display
         fontSize=50,  # Size of font
         margin=20,  # Minimum distance between text/image and edge of button
-        inactiveColour=(200, 50, 0),  # Colour of button when not being interacted with
-        hoverColour=(150, 0, 0),  # Colour of button when being hovered over
-        pressedColour=(0, 200, 20),  # Colour of button when being clicked
-        radius=20,  # Radius of border corners (leave empty for not curved)
+        inactiveColour= color,  # Colour of button when not being interacted with
+        #hoverColour=(150, 0, 0),  # Colour of button when being hovered over  
+        radius=30,  # Radius of border corners (leave empty for not curved)
         onClick= function  # Function to call when clicked on
         )
     button
@@ -146,6 +144,11 @@ def CreateButon(x,y,width,height,texts,function):
 def MainMenu():
     global RUN
     RUN = True
+    # Create only once or it will lag the menu.
+    CreateButon(250,350, 200, 150, "Start game", startgame, (200, 50, 0))
+    CreateButon(10,350, 220, 150, "Score history", ShowScore, (200, 150, 0))
+    CreateButon(480,350, 200, 150, "Exit", QuitGame, (200, 50, 150))    
+
     while RUN:
         events = pg.event.get()
         for event in events:
@@ -153,15 +156,12 @@ def MainMenu():
                 pg.quit()
                 RUN = False
                 quit()
-       
-        screen.blit(IMG_background, IMG_background.get_rect())
-        CreateButon(250,350, 200, 150, "Start game", startgame)
-        CreateButon(30,350, 200, 150, "Score history", ShowScore)
-        CreateButon(470,350, 200, 150, "Exit", QuitGame)
-        #screen.fill((255, 255, 255))
+        # This can be left in the loop as it is not resource intensive
+        screen.blit(IMG_background, IMG_background.get_rect())        
         pygame_widgets.update(events)
         pg.display.update()
-
+        clock.tick(SCREEN_FPS)
+    
 
 # quits to system
 def QuitGame():
@@ -306,7 +306,9 @@ class Enemy(pg.sprite.Sprite):
         
         # Vybere si náhodnu velkost
         self.sizex = random.randrange(10, 100)
+
         # Zobere x velkost a vynasobí ju aby meteority lepsie vyzerali
+        # Neiveim jak to matemaikicky ide
         self.sizey = random.randrange(int(self.sizex * 0.8), int(self.sizex * 1.2))
         
         # Zmení velkost enemy spritu pomocou náhodných parametrou
@@ -428,7 +430,7 @@ def writeScore(score):
         "\n"
         f'This was your last score: {score}\n'
         f"You achieved this in {current_DateTime}\n" 
-         "Congratas Amogo :)\n"
+         "Congratas :)\n"
         )
     # Write it to a txt file so you will have a list of scores
     # You will have to use "a" instead of the ususal write 
@@ -457,7 +459,7 @@ def victoryState():
             # Start a countdown in the top right which will tell the player how long they need to survive
             DrawText(screen, str(TTD),"arial", 24, (SCREEN_WIDTH /2) + 250, 30)
         
-            # Just not to overflow the fukcing counter-ass bitchlmao xddddddddddddddddddddddddddddddddddddddddddddd
+            # Just not to overflow the fukcing counter-ass bitchlmao xddddd
             if TTD -1 < 0:
                 TTD = 0
             else:    
@@ -475,8 +477,11 @@ sp_bullets = pg.sprite.Group()
     # creation of Player sprite
 player = Player()
 all_sprites.add(player)
+
+
 # Main + Overall Event Loop
 #######################################################
+
 def startgame():
     global RUN
     RUN = False
